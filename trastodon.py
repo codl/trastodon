@@ -2,10 +2,20 @@ from mastodon import Mastodon
 from tracery import Grammar
 from argparse import ArgumentParser
 import yaml
+from yaml.error import YAMLError
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
+import json
 
 def read_grammar(filename):
     with open(filename) as f:
-        rules = yaml.load(f)
+        try:
+            rules = yaml.load(f, Loader=Loader)
+        except YAMLError:
+            f.seek(0)
+            rules = json.load(f)
     return Grammar(rules)
 
 if __name__ == "__main__":
@@ -25,7 +35,7 @@ if __name__ == "__main__":
     if args.command == 'auth':
         try:
             with open(args.state_file) as f:
-                state = yaml.load(f)
+                state = yaml.load(f, Loader=Loader)
         except OSError:
             state = {}
         state['server'] = args.server
@@ -55,14 +65,15 @@ if __name__ == "__main__":
         print('success!')
         try:
             with open(args.state_file, 'w') as f:
-                yaml.dump(state, f, default_flow_style=False, default_style='')
+                yaml.dump(state, f, default_flow_style=False, default_style='',
+                        Dumper=Dumper)
         except OSError:
             print("could not write state file")
             exit(1)
     else:
         try:
             with open(args.state_file) as f:
-                state = yaml.load(f)
+                state = yaml.load(f, Loader=Loader)
         except OSError:
             print("Couldn't read state file!")
             exit(1)
@@ -86,7 +97,7 @@ if __name__ == "__main__":
 
         elif args.command == 'reply':
             if "notif_pointer" not in state:
-                state["notif_pointer"] = None
+                state["notif_pointer"] = 0
             mentions = filter(lambda n: n["type"] == "mention",
                     mas.notifications(since_id=state["notif_pointer"]))
             for mention in mentions:
@@ -100,7 +111,8 @@ if __name__ == "__main__":
                 state["notif_pointer"] = max((state['notif_pointer'], mention['id']))
             try:
                 with open(args.state_file, 'w') as f:
-                    yaml.dump(state, f, default_flow_style=False, default_style='')
+                    yaml.dump(state, f, default_flow_style=False,
+                            default_style='', Dumper=Dumper)
             except OSError:
                 print("could not write state file")
                 exit(1)
@@ -109,7 +121,8 @@ if __name__ == "__main__":
                 notification = mas.notifications(limit=1)[0]
                 state['notif_pointer'] = notification['id']
                 with open(args.state_file, 'w') as f:
-                    yaml.dump(state, f, default_flow_style=False, default_style='')
+                    yaml.dump(state, f, default_flow_style=False,
+                            default_style='', Dumper=Dumper)
             except:
                 pass
 
