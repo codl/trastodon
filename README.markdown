@@ -15,3 +15,5 @@ pip install --upgrade git+https://github.com/halcy/Mastodon.py.git@5ed78fbe8372b
 ```
 
 whenever a version higher than v1.0.7 comes out this probably won't be necessary
+
+note that pyyaml sucks ass so you have to make sure libyaml is installed too if you want emoji to work
