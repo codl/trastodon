@@ -69,7 +69,8 @@ if __name__ == "__main__":
         try:
             mas = Mastodon(state['client_id'], state['client_secret'], state['access_token'],
                     api_base_url=state['server'])
-            if "error" in mas.account_verify_credentials():
+            me = mas.account_verify_credentials()
+            if "error" in me:
                 raise Exception()
         except:
             print("Couldn't log in. Try auth first")
@@ -86,19 +87,23 @@ if __name__ == "__main__":
         elif args.command == 'reply':
             if "notif_pointer" not in state:
                 state["notif_pointer"] = None
-            for notification in mas.notifications(since_id=state["notif_pointer"]):
-                if notification["type"] == "mention":
-                    visibility = notification['status']['visibility']
-                    if visibility == 'public':
-                        visibility = 'unlisted'
-                    mas.status_post(grammar.flatten(args.rule), in_reply_to_id=notification['status']['id'], visibility=visibility)
-                state["notif_pointer"] = notification['id']
-                try:
-                    with open(args.state_file, 'w') as f:
-                        yaml.dump(state, f, default_flow_style=False, default_style='')
-                except OSError:
-                    print("could not write state file")
-                    exit(1)
+            mentions = filter(lambda n: n["type"] == "mention",
+                    mas.notifications(since_id=state["notif_pointer"]))
+            for mention in mentions:
+                visibility = mention['status']['visibility']
+                if visibility == 'public':
+                    visibility = 'unlisted'
+                mas.status_post(
+                        "@%s %s" % (mention['status']['account']['acct'], grammar.flatten(args.rule)),
+                        in_reply_to_id=mention['status']['id'], visibility=visibility)
+
+                state["notif_pointer"] = max((state['notif_pointer'], mention['id']))
+            try:
+                with open(args.state_file, 'w') as f:
+                    yaml.dump(state, f, default_flow_style=False, default_style='')
+            except OSError:
+                print("could not write state file")
+                exit(1)
         elif args.command == 'clear_notifications':
             try:
                 notification = mas.notifications(limit=1)[0]
