@@ -101,6 +101,10 @@ if __name__ == "__main__":
             mentions = filter(lambda n: n["type"] == "mention",
                     mas.notifications(since_id=state["notif_pointer"]))
             for mention in mentions:
+
+                # temp fuckass fix until mastodon.py gets updated for 2.0
+                mention['id'] = int(mention['id'])
+
                 visibility = mention['status']['visibility']
                 if visibility == 'public':
                     visibility = 'unlisted'
