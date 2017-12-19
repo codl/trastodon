@@ -1,5 +1,6 @@
 from mastodon import Mastodon
 from tracery import Grammar
+from tracery.modifiers import base_english
 from argparse import ArgumentParser
 import yaml
 from yaml.error import YAMLError
@@ -91,6 +92,8 @@ if __name__ == "__main__":
         except OSError:
             print("Grammar file could not be read! Check your path and permissions")
             exit(1)
+
+        grammar.add_modifiers(base_english)
 
         if args.command == 'toot':
             mas.status_post(grammar.flatten(args.rule), visibility="unlisted")
