@@ -19,6 +19,11 @@ def read_grammar(filename):
             rules = json.load(f)
     return Grammar(rules)
 
+def save_state(filename, state):
+    stateyaml = yaml.dumps(state, default_flow_style=False, default_style='', Dumper=Dumper)
+    with open(filename, 'w') as f:
+        f.write(stateyaml)
+
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument('state_file', help='file in which to store or read state')
@@ -65,9 +70,7 @@ if __name__ == "__main__":
 
         print('success!')
         try:
-            with open(args.state_file, 'w') as f:
-                yaml.dump(state, f, default_flow_style=False, default_style='',
-                        Dumper=Dumper)
+            save_state(args.state_file, state)
         except OSError:
             print("could not write state file")
             exit(1)
@@ -117,9 +120,7 @@ if __name__ == "__main__":
 
                 state["notif_pointer"] = max((state['notif_pointer'], mention['id']))
             try:
-                with open(args.state_file, 'w') as f:
-                    yaml.dump(state, f, default_flow_style=False,
-                            default_style='', Dumper=Dumper)
+                save_state(args.state_file, state)
             except OSError:
                 print("could not write state file")
                 exit(1)
@@ -127,9 +128,7 @@ if __name__ == "__main__":
             try:
                 notification = mas.notifications(limit=1)[0]
                 state['notif_pointer'] = notification['id']
-                with open(args.state_file, 'w') as f:
-                    yaml.dump(state, f, default_flow_style=False,
-                            default_style='', Dumper=Dumper)
+                save_state(args.state_file, state)
             except:
                 pass
 
